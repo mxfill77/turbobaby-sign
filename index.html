@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Turbobaby · Rental Agreement</title>
+<style>
+  :root { --bg: #f5f5f7; --card: #fff; --ink: #111; --muted: #666; --accent: #ff6a00; --line: #e5e5ea; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #111; --card: #1c1c1e; --ink: #f2f2f7; --muted: #a1a1a6; --line: #2c2c2e; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: var(--bg); color: var(--ink);
+         font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+  .card { background: var(--card); border-radius: 14px; padding: 20px; max-width: 560px; margin: 8vh auto 0;
+          box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  h1 { font-size: 20px; margin: 0 0 10px; }
+  p { color: var(--muted); font-size: 15px; line-height: 1.45; margin: 0; }
+  .btn { display: block; width: 100%; text-align: center; font-size: 17px; font-weight: 600; padding: 14px;
+         border-radius: 12px; border: 0; margin-top: 14px; background: var(--accent); color: #fff; text-decoration: none; cursor: pointer; }
+  .btn.sec { background: transparent; color: var(--ink); border: 1px solid var(--line); font-weight: 500; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Turbobaby · Rental Agreement</h1>
+  <p id="msg">Preparing your agreement… / Готовим договор…</p>
+  <button class="btn" id="again" type="button" hidden>Try again / Попробовать снова</button>
+  <a class="btn sec" id="alt" hidden rel="noreferrer">Open another way / Открыть другим способом</a>
+</div>
+<script>
+/*
+ * Ссылка клиенту на подпись Turbobaby — страница ВНЕ Google (TB e-Sign 0.2.3, свойство SIGN_PAGE_URL).
+ * Зачем: в браузере, где вошли в несколько учётных записей Google, адрес script.google.com Google подменяет на
+ * /macros/u/N/ и отвечает «Не удалось открыть файл» (замер 26.10.2026). Запрос отсюда к веб-приложению идёт без
+ * куки Google — анонимно — и проходит. Веб-приложение отправляет договор в BoldSign (если ещё не ушёл или его
+ * правили) и возвращает свежую ссылку на подпись; страница уводит на неё. Превью мессенджеров скриптов не
+ * исполняют — договор уходит, только когда ссылку открыл человек.
+ * Адрес веб-приложения зашит здесь намеренно: страница не принимает его из ссылки, иначе её можно было бы
+ * направить на чужой скрипт и увести клиента куда угодно. По той же причине уводим только на app.boldsign.com.
+ */
+(function () {
+  var APP = 'https://script.google.com/macros/s/AKfycbyJiYGklrArpXxk0Lu0LaZ9CRagowS6wNKKE7d-HL_-Yf8wkLViWQM5-JCvNwL4vtw82w/exec';
+  var T = {
+    ask: 'Preparing your agreement… / Готовим договор…',
+    busy: 'The agreement is being updated — it will open in a minute. / Договор обновляется — откроется через минуту.',
+    later: 'The agreement is still being updated — please open the link a bit later. / Договор ещё обновляют — откройте ссылку чуть позже.',
+    wait: 'The agreement cannot be opened right now — Turbobaby staff already know and will help. / Договор сейчас не открывается — сотрудник Turbobaby уже знает и поможет.',
+    fail: 'Something went wrong — please try again in a minute. / Не получилось — попробуйте ещё раз через минуту.',
+    done: 'This agreement is already signed. / Этот договор уже подписан.',
+    signed: 'Your signature is recorded. / Ваша подпись принята.',
+    cancelled: 'This agreement is no longer active. / Этот договор больше не действует.',
+    bad: 'This link is incomplete — please ask Turbobaby staff for the link again. / Ссылка неполная — попросите сотрудника Turbobaby прислать её ещё раз.'
+  };
+  function $(id) { return document.getElementById(id); }
+  function say(text, again) {
+    $('msg').textContent = text;
+    $('again').hidden = !again;
+    $('alt').hidden = !again || !$('alt').getAttribute('href');
+  }
+  function params() {
+    var s = (location.hash || '').replace(/^#/, '');
+    if (!s) s = (location.search || '').replace(/^\?/, '');
+    var o = {};
+    s.split('&').forEach(function (kv) {
+      var i = kv.indexOf('=');
+      if (i > 0) { try { o[decodeURIComponent(kv.slice(0, i))] = decodeURIComponent(kv.slice(i + 1)); } catch (e) {} }
+    });
+    return o;
+  }
+  var P = params(), D = P.d || '', K = P.k || '';
+  if (!/^[A-Za-z0-9_-]{20,100}$/.test(D) || !/^[0-9a-f]{24}$/.test(K)) { say(T.bad, false); return; }
+  // Запасной путь — прежняя ссылка через веб-приложение: у кого одна учётная запись Google (или ни одной), она работает.
+  $('alt').href = APP + '?a=sign&d=' + encodeURIComponent(D) + '&k=' + encodeURIComponent(K) + '&who=client';
+  var tries = 0;
+  function go() {
+    say(T.ask, false);
+    var url = APP + '?a=api&op=open&d=' + encodeURIComponent(D) + '&k=' + encodeURIComponent(K) + '&t=' + Date.now();
+    fetch(url, { credentials: 'omit', cache: 'no-store', redirect: 'follow' })
+      .then(function (r) { return r.json(); })
+      .then(function (r) {
+        if (r && typeof r.url === 'string' && /^https:\/\/app\.boldsign\.com\//.test(r.url)) { location.replace(r.url); return; }
+        if (r && r.done) { say(T.done, false); return; }
+        if (r && r.signed) { say(T.signed, false); return; }
+        if (r && r.cancelled) { say(T.cancelled, false); return; }
+        if (r && r.busy) {
+          if (tries < 9) { tries++; say(T.busy, false); setTimeout(go, 20000); } else { say(T.later, true); }
+          return;
+        }
+        say(T.wait, true);
+      })
+      .catch(function () { say(T.fail, true); });
+  }
+  $('again').onclick = function () { tries = 0; go(); };
+  go();
+})();
+</script>
+</body>
+</html>
