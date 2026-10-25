@@ -81,6 +81,7 @@
       .then(function (r) { return r.json(); })
       .then(function (r) {
         if (r && typeof r.url === 'string' && /^https:\/\/app\.boldsign\.com\//.test(r.url)) { location.replace(r.url); return; }
+        if (r && r.bad) { say(T.bad, false); return; }
         if (r && r.done) { say(T.done, false); return; }
         if (r && r.signed) { say(T.signed, false); return; }
         if (r && r.cancelled) { say(T.cancelled, false); return; }

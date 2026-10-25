@@ -54,6 +54,9 @@ function run(hash, answers) {
     ok('ответ ' + k + ' — свой текст, без перехода и без кнопок', re.test(t.els.msg.textContent) && t.st.replaced === null && t.els.again.hidden, t.els.msg.textContent);
   }
 
+  t = run(H, [{ bad: true }]); await t.flush(); await t.flush();
+  ok('ключ не подошёл (TB e-Sign 0.2.4: {bad:true}) — «ссылка неполная», без кнопок', /incomplete/.test(t.els.msg.textContent) && t.els.again.hidden && t.st.replaced === null, t.els.msg.textContent);
+
   t = run(H, [{ busy: true }]); await t.flush(); await t.flush();
   ok('busy — «обновляется», повтор через 20 с', /being updated/.test(t.els.msg.textContent) && t.st.timers[0] === 20000, t.st.timers.join(','));
   for (let n = 0; n < 9; n++) { t.st.next(); await t.flush(); await t.flush(); }
