@@ -49,10 +49,15 @@ function run(hash, answers) {
   ok('ссылка не BoldSign — перехода нет, «сотрудник поможет»', t.st.replaced === null && /staff already know/.test(t.els.msg.textContent), t.els.msg.textContent);
   ok('запасная ссылка — прежняя a=sign того же договора', t.els.alt.attrs.href === APP + '?a=sign&d=' + D + '&k=' + K + '&who=client' && t.els.alt.hidden === false, t.els.alt.attrs.href);
 
-  for (const [k, re] of [['done', /already signed/], ['signed', /signature is recorded/], ['cancelled', /no longer active/]]) {
+  for (const [k, re] of [['done', /already signed/], ['signed', /signature is recorded/], ['cancelled', /no longer valid.*недействителен/]]) {
     t = run(H, [{ [k]: true }]); await t.flush(); await t.flush();
     ok('ответ ' + k + ' — свой текст, без перехода и без кнопок', re.test(t.els.msg.textContent) && t.st.replaced === null && t.els.again.hidden, t.els.msg.textContent);
   }
+
+  // TB e-Sign 0.2.6: заменён новым договором на тот же байк — {cancelled, replaced}: «заменён», а не «недействителен».
+  t = run(H, [{ cancelled: true, replaced: true }]); await t.flush(); await t.flush();
+  ok('ответ {cancelled, replaced} — «заменён, откройте последнюю ссылку», без перехода и без кнопок', /replaced by a newer one.*заменён/.test(t.els.msg.textContent) &&
+    t.st.replaced === null && t.els.again.hidden, t.els.msg.textContent);
 
   t = run(H, [{ bad: true }]); await t.flush(); await t.flush();
   ok('ключ не подошёл (TB e-Sign 0.2.4: {bad:true}) — «ссылка неполная», без кнопок', /incomplete/.test(t.els.msg.textContent) && t.els.again.hidden && t.st.replaced === null, t.els.msg.textContent);

@@ -50,7 +50,9 @@
     fail: 'Something went wrong — please try again in a minute. / Не получилось — попробуйте ещё раз через минуту.',
     done: 'This agreement is already signed. / Этот договор уже подписан.',
     signed: 'Your signature is recorded. / Ваша подпись принята.',
-    cancelled: 'This agreement is no longer active. / Этот договор больше не действует.',
+    cancelled: 'This agreement is no longer valid. / Этот договор недействителен.',
+    // TB e-Sign 0.2.6: договор заменён более новым на тот же байк — ответ {cancelled, replaced}; старая страница видит в нём cancelled.
+    replaced: 'This agreement has been replaced by a newer one — please open the latest link from Turbobaby staff. / Этот договор заменён — откройте последнюю ссылку от сотрудника.',
     bad: 'This link is incomplete — please ask Turbobaby staff for the link again. / Ссылка неполная — попросите сотрудника Turbobaby прислать её ещё раз.'
   };
   function $(id) { return document.getElementById(id); }
@@ -84,6 +86,7 @@
         if (r && r.bad) { say(T.bad, false); return; }
         if (r && r.done) { say(T.done, false); return; }
         if (r && r.signed) { say(T.signed, false); return; }
+        if (r && r.replaced) { say(T.replaced, false); return; }
         if (r && r.cancelled) { say(T.cancelled, false); return; }
         if (r && r.busy) {
           if (tries < 9) { tries++; say(T.busy, false); setTimeout(go, 20000); } else { say(T.later, true); }
